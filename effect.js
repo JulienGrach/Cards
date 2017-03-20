@@ -97,7 +97,7 @@ function constructObjects(arrayObject, arrayValue){
 
 
 
-
+//change le chemin de l'image, active la carte.
 function returnCardForActiv(cards){
   cards.dom.style.background = "url('assets/sprites/"+cards.value.toString()+".png')";
   cards.dom.style.backgroundSize = "cover";
@@ -105,7 +105,7 @@ function returnCardForActiv(cards){
 }
 
 
-
+//change le chemin de l'image, désactive la carte.
 function returnCardForDisactiv(cards){
   cards.dom.style.background = "url('assets/sprites/back.png')";
   cards.dom.style.backgroundSize = "cover";
@@ -117,6 +117,7 @@ function returnCardForDisactiv(cards){
 /*======================================================CONTROLE DU JEU========================================================*/
 
 
+//Quand on trouve, on change les paramêtres des objets trouvés.
 function onFound(cardOne, cardTwo){
   cardOne.outGame = true;
   cardTwo.outGame = true;
@@ -125,7 +126,7 @@ function onFound(cardOne, cardTwo){
 }
 
 
-
+//Fonction qui parcourt le tableau à la recherche de cartes encore en jeu.
 function isWin(cards){
   var finish = true;
   for(var i=0; i<cards.length; i++){
@@ -141,9 +142,11 @@ return finish
 
 
 function aiguilleur(cards, id){
-  returnCardForActiv(cards[id]);
+  returnCardForActiv(cards[id]); //On retourne la carte cliquée (côté face).
   var activ;
 
+
+//On recherche les cartes actives, s'il n'y en a pas ou si la carte active est la carte cliquée, on déclare la carte active.
   for(var i=0; i<cards.length; i++){
     if(cards[i].activ && cards[i] != cards[id]){
       activ = i;
@@ -152,6 +155,9 @@ function aiguilleur(cards, id){
   }
 
 
+//S'il y a une carte active, on compare leur valeur, si c'est juste on renvoie à onFound,
+//(!!! BUG !!!) sinon on attends deux secondes et on désactive les cartes.
+//Soluce: Et si on retournait les deux cartes soit au bout de deux secondes, soit au prochain clic ?
   if(activ != undefined){
     if(cards[activ].value == cards[id].value){
       console.log('Trouvé !');
@@ -169,6 +175,31 @@ function aiguilleur(cards, id){
 
 
 
+/*======================================================Vérificateur========================================================*/
+
+
+//BUG ligne 160, pour régler momentanément le problème, on empêche plus de deux cartes d'être retournées en même temps.
+//Si plus de deux cartes retournées, on les désactive.
+function blockThird(cards){
+  var numberActiv = [];
+  var id = 0;
+
+  for(var i=0; i<cards.length; i++){ //on boucle le long du tableau de cartes
+    if(cards[i].activ){//on cherche les cartes activent
+      numberActiv[id] = i;//on enregistre leur position dans le tableau.
+      id ++;
+    }
+  }
+
+  if(id >= 2) {//Si plus de deux cartes activent.
+    for(var i = 0; i < numberActiv.length; i++) {//on renvoie toutes les cartes enregistrées à disactiv.
+      returnCardForDisactiv(cards[numberActiv[i]]);
+    }
+  }
+}
+
+
+
 /*======================================================MAIN========================================================*/
 
 
@@ -177,7 +208,10 @@ var cards = constructObjects(initAffichCards(), positCards());//Grace aux deux t
 for(var i=0; i<cards.length; i++){
   cards[i].dom.addEventListener('click', function(){
     for(var j=0; this!=cards[j].dom; j++){}//On vérifie quelle carte a été cliqué.
-    aiguilleur(cards, j);
+    
+    blockThird(cards)//Reglage du BUG ligne 159 ... (Note: Solution à modifier).
+
+    aiguilleur(cards, j);//On envoie le tableau de cartes et le numéro de la carte cliquée.
 
     if(isWin(cards)){
       alert('Vous avez Gagné !');
